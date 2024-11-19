@@ -125,7 +125,7 @@ function sbcl_backend_scripts() {
     if ($screen->id === 'settings_page_change_login_logo') {
         wp_enqueue_style('wp-color-picker');
         wp_enqueue_script('wp-color-picker');
-        wp_enqueue_script('sbcl-backend', plugins_url('/admin/backend.js', __FILE__), array('jquery'), SBCL_VERSION, 'true');
+        wp_enqueue_script('sbcl-backend', plugins_url('/assets/backend.js', __FILE__), array('jquery'), SBCL_VERSION, 'true');
         $values = array(
             'bg_type' => get_option('sbcl_wp_set_bg', 'color')
         );
