@@ -1,4 +1,4 @@
-#WordPress Custom Logo
+# WordPress Custom Logo
 
 Welcome to the Project! This project is open-source, and we appreciate all contributions that help improve it. Whether you want to add a new feature, fix a bug, or improve the documentation, every contribution is valuable. Here's how you can contribute.
 
