@@ -1,6 +1,6 @@
 <?php
 /*
-Plugin Name: sb custom logo by sbtechbd
+Plugin Name: Sb custom logo by sbtechbd
 Plugin URI: https://wordpress.org/plugins/sb-custom-logo-by-sbtechbd
 Description: A plugin to change the WordPress login logo with an option to upload it from the admin panel.
 Version: 1.0
@@ -11,157 +11,170 @@ License: GPLv2
 Domain Path: /languages
 */
 
+/**
+*
+* Exit if accessed directly
+*
+**/
 if (!defined('ABSPATH')) {
-    exit; // Exit if accessed directly
+    exit;
 }
 
-// Add settings page
-add_action('admin_menu', 'sbclb_add_admin_menu');
-add_action('admin_init', 'sbclb_settings_init');
-add_action('admin_enqueue_scripts', 'sbclb_enqueue_media_uploader');
-add_action('login_enqueue_scripts', 'sbclb_custom_logo'); // Enqueue styles for login page
+/* Defining Constant */
+define("SBCL_VERSION", '1.0');
 
-// Add Admin Menu
-function sbclb_add_admin_menu()
-{
-    add_options_page(
-        esc_html__('Sb Custom Logo by sbtechbd', 'sb-custom-logo-by-sbtechbd'),
-        esc_html__('Sb Custom Logo', 'sb-custom-logo-by-sbtechbd'),
-        'manage_options',
-        'sbclb_custom_logo',
-        'sbclb_options_page'
-    );
-}
+/* Add body class for options page */
+function sbcl_admin_body_class($classes) {
+    global $pagenow;
+    $screen = get_current_screen(); 
 
-// Register Settings
-function sbclb_settings_init()
-{
-    register_setting('pluginPage', 'sbclb_settings', 'sanitize_text_field');
-
-    add_settings_section(
-        'sbclb_pluginPage_section',
-        esc_html__('Upload your custom login logo', 'sb-custom-logo-by-sbtechbd'),
-        'sbclb_settings_section_callback',
-        'pluginPage'
-    );
-
-    add_settings_field(
-        'sbclb_logo',
-        esc_html__('Logo URL', 'sb-custom-logo-by-sbtechbd'),
-        'sbclb_logo_render',
-        'pluginPage',
-        'sbclb_pluginPage_section'
-    );
-}
-
-// Enqueue Media Uploader
-function sbclb_enqueue_media_uploader($hook_suffix)
-{
-    if ($hook_suffix === 'settings_page_sbclb_custom_logo') {
-        wp_enqueue_media(); // Enqueue media library
-        wp_enqueue_script('jquery');
-
-        // Register the custom script with a version
-        wp_register_script(
-            'sbclb-custom-logo-script',
-            plugins_url('/assets/js/custom-logo.js', __FILE__),
-            array('jquery'),
-            '1.0', // Version number for caching
-            true
-        );
-
-        // Enqueue the registered script
-        wp_enqueue_script('sbclb-custom-logo-script');
-
-        // Inline JavaScript for media uploader
-        $inline_js = "
-            jQuery(document).ready(function($) {
-                $('#upload-logo-button').click(function(e) {
-                    e.preventDefault();
-                    var image = wp.media({
-                        title: '" . esc_js(__('Upload Logo', 'sb-custom-logo-by-sbtechbd')) . "',
-                        multiple: false,
-                        library: { type: 'image' }
-                    }).open().on('select', function() {
-                        var uploaded_image = image.state().get('selection').first();
-                        var image_url = uploaded_image.toJSON().url;
-                        $('input[name=\"sbclb_settings[sbclb_logo]\"]').val(image_url);
-                    });
-                });
-            });
-        ";
-        
-        wp_add_inline_script('sbclb-custom-logo-script', $inline_js);
+    if (in_array($pagenow, array('options-general.php'), true) && $screen->id === 'settings_page_change_login_logo') {
+        $classes .= ' sbcl-option-page';
     }
+
+    return $classes;
 }
 
-// Render Logo Input Field
-function sbclb_logo_render()
-{
-    $options = get_option('sbclb_settings');
-    $logo_url = isset($options['sbclb_logo']) ? esc_url($options['sbclb_logo']) : '';
-?>
-<input type='text' name='sbclb_settings[sbclb_logo]' value='<?php echo esc_attr($logo_url); ?>'>
-<input type="button" value="<?php esc_attr_e('Upload Image', 'sb-custom-logo-by-sbtechbd'); ?>" id="upload-logo-button"
-    class="button-secondary">
-<p class="description"><?php esc_html_e('Enter a URL or upload an image.', 'sb-custom-logo-by-sbtechbd'); ?></p>
-<?php
-}
+add_filter('admin_body_class', 'sbcl_admin_body_class');
 
-// Settings Section Callback
-function sbclb_settings_section_callback()
-{
-    echo esc_html__('Upload your custom login logo. Change the WordPress login logo easily from this panel.', 'sb-custom-logo-by-sbtechbd');
-}
+/* Adding Styles for the option page */
+function sbcl_styles_option_page() {
+    global $pagenow;
+    $screen = get_current_screen(); 
 
-// Options Page
-function sbclb_options_page()
-{
-?>
-<form action='options.php' method='post'>
-    <?php
-        settings_fields('pluginPage');
-        do_settings_sections('pluginPage');
-        submit_button();
+    if (in_array($pagenow, array('options-general.php'), true) && $screen->id === 'settings_page_change_login_logo') {
         ?>
-</form>
-<?php
-}
-
-// Apply the custom logo to the login page
-function sbclb_custom_logo()
-{
-    $options = get_option('sbclb_settings');
-    $logo_url = isset($options['sbclb_logo']) ? esc_url($options['sbclb_logo']) : '';
-
-    // Add inline style for the login page logo
-    ?>
-<style type="text/css">
-#login h1 a {
-    background-image: url('<?php echo esc_url($logo_url); ?>');
-    width: 100%;
-    height: auto;
-    background-size: contain;
-    background-repeat: no-repeat;
-    padding-bottom: 30px;
-}
-</style>
-<?php
-}
-
-// Register styles with versioning only on specific pages
-function sbclb_register_styles() {
-    if (is_admin()) {
-        // Only load styles on admin pages
-        wp_register_style(
-            'sbclb-custom-logo-style',
-            plugins_url('/assets/css/custom-logo.css', __FILE__),
-            array(),
-            '1.0' // Version number for caching
-        );
-        wp_enqueue_style('sbclb-custom-logo-style');
+        <style type="text/css">
+            .sbcl-option-page table.form-table tbody {
+                background-color: #fff;
+            }
+            .sbcl-option-page table.form-table tbody tr:not(:last-child) {
+                border-bottom: 1px solid #eee;
+            }
+            .sbcl-option-page table.form-table tbody th {
+                padding: 15px 10px;
+            }
+        </style>
+        <?php
     }
 }
-add_action('admin_enqueue_scripts', 'sbclb_register_styles');
+add_action('admin_head', 'sbcl_styles_option_page');
 
+/* Settings to manage WP login logo */
+function sbcl_register_custom_logo_settings() {
+    register_setting('sbcl_change_login_options_group', 'sbcl_wp_logo_url');
+    register_setting('sbcl_change_login_options_group', 'sbcl_wp_set_bg');
+    register_setting('sbcl_change_login_options_group', 'sbcl_wp_bg_color');
+    register_setting('sbcl_change_login_options_group', 'sbcl_wp_bg_img_url');
+    register_setting('sbcl_change_login_options_group', 'sbcl_wp_logo_link');
+    register_setting('sbcl_change_login_options_group', 'sbcl_wp_link_color');
+    register_setting('sbcl_change_login_options_group', 'sbcl_wp_link_hover_color');
+    register_setting('sbcl_change_login_options_group', 'sbcl_wp_logo_width');
+    register_setting('sbcl_change_login_options_group', 'sbcl_wp_logo_height');
+}
+add_action('admin_init', 'sbcl_register_custom_logo_settings');
+
+function sbcl_register_login_logo_setting_page() {
+    add_options_page('Custom Login Logo', 'Custom Login Logo', 'manage_options', 'change_login_logo', 'sbcl_change_wordpress_login_logo');
+}
+add_action('admin_menu', 'sbcl_register_login_logo_setting_page');
+
+function sbcl_change_wordpress_login_logo() {
+    wp_enqueue_script('jquery');
+    wp_enqueue_media();
+
+    $cur_logo = esc_attr(get_option('sbcl_wp_logo_url', ''));
+    $cur_bg_img = esc_attr(get_option('sbcl_wp_bg_img_url', ''));
+
+    do_action('sbcl_settings_start');
+
+    ?>
+    <div class="wrap">
+        <h1><?php echo esc_html__('Custom Login Logo Settings', 'sb-custom-logo-by-sbtechbd'); ?></h1>
+        <p><?php echo esc_html__('Change the default WordPress logo and set your own site logo.', 'sb-custom-logo-by-sbtechbd'); ?></p>
+        <form method="post" action="options.php">
+            <?php settings_fields('sbcl_change_login_options_group'); ?>
+            <?php do_settings_sections('sbcl_change_login_options_group'); ?>
+            <table class="form-table">
+                <!-- Logo Section -->
+                <?php if ($cur_logo !== ""): ?>
+                <tr valign="top">
+                    <th>Current Logo</th>
+                    <td>
+                        <img class="sbcl_current_logo" src="<?php echo esc_url(get_option('sbcl_wp_logo_url')); ?>" alt="<?php echo esc_html__('Current Logo', 'sb-custom-logo-by-sbtechbd') ?>" width="220">
+                    </td>
+                </tr>
+                <?php endif; ?>
+                
+                <!-- Add more form elements here -->
+
+            </table>
+            <p class="submit submitbox change_login_logo-setting-btn">
+                <?php 
+                    submit_button(__('Save Settings', 'sb-custom-logo-by-sbtechbd'), 'primary', 'change_login_logo-save-settings', false);
+                ?>
+            </p>
+        </form>
+    </div>
+    <?php
+}
+
+/* Adding Backend Scripts */
+function sbcl_backend_scripts() {
+    $screen = get_current_screen(); 
+    if ($screen->id === 'settings_page_change_login_logo') {
+        wp_enqueue_style('wp-color-picker');
+        wp_enqueue_script('wp-color-picker');
+        wp_enqueue_script('sbcl-backend', plugins_url('/admin/backend.js', __FILE__), array('jquery'), SBCL_VERSION, 'true');
+        $values = array(
+            'bg_type' => get_option('sbcl_wp_set_bg', 'color')
+        );
+        wp_localize_script('sbcl-backend', 'sbcl_admin', $values);
+    }
+}
+add_action('admin_enqueue_scripts', 'sbcl_backend_scripts');
+
+/* Custom WordPress admin login header logo */
+function sbcl_wordpress_custom_login_logo() {
+    // Add your logo customization code
+}
+add_action('login_head', 'sbcl_wordpress_custom_login_logo');
+
+/* Add action links to plugin list */
+add_filter('plugin_action_links_' . plugin_basename(__FILE__), 'sbcl_add_change_wordpress_login_logo_action_links');
+function sbcl_add_change_wordpress_login_logo_action_links($links) {
+    $settings_link = array(
+         '<a href="' . admin_url('options-general.php?page=change_login_logo') . '">Logo Settings</a>'
+    );
+    return array_merge($links, $settings_link);
+}
+
+/* Reset the settings */
+function sbcl_reset_settings() {
+    if (isset($_GET['action']) && 'reset' === $_GET['action']) {
+        if (!wp_verify_nonce($_REQUEST['_wpnonce'], 'change_login_logo-settings')) {
+            die(esc_html__('Security check', 'sb-custom-logo-by-sbtechbd')); 
+        } else {
+            delete_option('sbcl_wp_logo_url');
+            delete_option('sbcl_wp_set_bg');
+            delete_option('sbcl_wp_bg_color');
+            delete_option('sbcl_wp_bg_img_url');
+            delete_option('sbcl_wp_logo_link');
+            delete_option('sbcl_wp_link_color');
+            delete_option('sbcl_wp_link_hover_color');
+            delete_option('sbcl_wp_logo_width');
+            delete_option('sbcl_wp_logo_height');
+            wp_safe_redirect(admin_url('options-general.php?page=change_login_logo'));
+            exit();
+        }
+    }
+}
+add_action('sbcl_settings_start', 'sbcl_reset_settings');
+
+function sbcl_add_class_login_page($classes) {
+    $classes[] = "sbcl_loaded";
+    return $classes;
+}
+
+add_filter('login_body_class', 'sbcl_add_class_login_page');
 ?>
