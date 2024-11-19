@@ -1,4 +1,4 @@
-=== sb custom logo by sbtechbd ===
+=== Sb custom logo by sbtechbd ===
 Contributors: subrata-deb-nath
 Tags: login, logo, custom logo, admin panel, WordPress
 Requires at least: 5.0
