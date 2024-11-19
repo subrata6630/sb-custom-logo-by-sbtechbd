@@ -3,7 +3,7 @@
 Plugin Name: Sb custom logo by sbtechbd
 Plugin URI: https://wordpress.org/plugins/sb-custom-logo-by-sbtechbd
 Description: A plugin to change the WordPress login logo with an option to upload it from the admin panel.
-Version: 1.0
+Version: 1.2
 Author: subrata-deb-nath
 Author URI: https://subrata6630.github.io/
 Text Domain: sb-custom-logo-by-sbtechbd
@@ -21,7 +21,7 @@ if (!defined('ABSPATH')) {
 }
 
 /* Defining Constant */
-define("SBCL_VERSION", '1.0');
+define("SBCL_VERSION", '1.2');
 
 /* Add body class for options page */
 function sbcl_admin_body_class($classes) {
