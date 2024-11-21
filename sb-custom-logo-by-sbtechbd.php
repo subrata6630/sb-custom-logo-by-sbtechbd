@@ -128,17 +128,17 @@ function sbclb_settings_page()
 <?php
 }
 
-// Add custom styles to the login page.
 function sbclb_styles()
 {
     $options = get_option('sbclb_options');
     $logo_url = esc_url($options['logo_image'] ?? '');
-    $logo_width = esc_attr($options['logo_width'] ?? '84');
-    $logo_height = esc_attr($options['logo_height'] ?? '84');
-    $bottom_margin = esc_attr($options['bottom_margin'] ?? '20');
+    $logo_width = intval($options['logo_width'] ?? 84);
+    $logo_height = intval($options['logo_height'] ?? 84);
+    $bottom_margin = intval($options['bottom_margin'] ?? 20);
 
     if ($logo_url) {
-        echo "<style>
+        // Build the CSS dynamically.
+        $custom_css = "
             #login h1 a {
                 background-image: url('{$logo_url}');
                 background-size: contain;
@@ -146,10 +146,14 @@ function sbclb_styles()
                 height: {$logo_height}px;
                 margin-bottom: {$bottom_margin}px;
             }
-        </style>";
+        ";
+
+        // Add the custom CSS inline.
+        wp_add_inline_style('login', $custom_css);
     }
 }
 add_action('login_enqueue_scripts', 'sbclb_styles');
+
 
 // Change the login logo URL.
 function sbclb_logo_url()
